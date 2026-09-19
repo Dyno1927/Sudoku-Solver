@@ -21,6 +21,23 @@ void print_grid() {
     }
 }
 
+void write_solution() {
+    FILE* output = fopen("output/solution.txt", "w");
+
+    if (output == NULL) {
+        perror("Where da output dir gng :/ ?");
+        return;
+    }
+
+    for (int rows = 0; rows < 9; rows++) {
+        for (int cols = 0; cols < 9; cols++) {
+            fprintf(output, "%d", grid[rows][cols]);
+        }
+        fprintf(output, "\n");
+    }
+    fclose(output);
+}
+
 // Checks if placing no_to_try at (row, col) breaks sudoku rules.
 // Returns 1 if it fits, 0 if not. Three rules, all basic:
 int is_valid(int row, int col, int no_to_try) {
@@ -64,15 +81,15 @@ int is_valid(int row, int col, int no_to_try) {
 int solve() {
     for (int row = 0; row < 9; row++) {
         for (int col = 0; col < 9; col++) {
-            if (grid[row][col] == 0) {          // found a hole to fill
+            if (grid[row][col] == 0) {                         // found a hole to fill
                 for (int trying = 1; trying <= 9; trying++) {  // try candidates
                     if (is_valid(row, col, trying)) {
                         grid[row][col] = trying;  // tentatively place it
 
-                        if (solve()) {            // can we finish from here?
-                            return 1;             // yes! bubble the "solved" up
+                        if (solve()) {  // can we finish from here?
+                            return 1;   // yes! bubble the "solved" up
                         } else {
-                            grid[row][col] = 0;   // no — undo and try next number
+                            grid[row][col] = 0;  // no — undo and try next number
                         }
                     }
                 }
@@ -101,10 +118,12 @@ int main() {
     while ((buf = fgetc(puzzle)) != EOF) {
         // buf is a char like '5'. '0' has ASCII value 48, '5' has 53,
         // so '5' - '0' = 53 - 48 = 5. That's the char->number trick.
-        // pos/9 = which row, pos%9 = which column. One flat counter
+        // pos / 9 = which row, pos%9 = which column. One flat counter
         // becomes two indexes, no nested loop needed.
-        grid[pos / 9][pos % 9] = buf - '0';
-        pos++;
+        if (buf >= '0' && buf <= '9' && pos < 81) { // ASan global buffer overflow fix as main() reads '\n' too.
+            grid[pos / 9][pos % 9] = buf - '0';
+            pos++;
+        }
     }
 
     fclose(puzzle);  // always close what I open
@@ -117,6 +136,7 @@ int main() {
     if (solve()) {
         printf("Solved Sudoku Grid:\n");
         print_grid();
+        write_solution();
     } else {
         printf("No solution exists for this Sudoku grid.\n");
     }

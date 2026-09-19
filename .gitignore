@@ -1,2 +1,8 @@
-# Compiled artifacts
+# Compiled
 build/
+
+# Written by Solver.c on every solve
+C/output/solution.txt
+
+# Written by Fetcher/pipeline.py on every fetch — new puzzle each run
+C/input/puzzle.txt
